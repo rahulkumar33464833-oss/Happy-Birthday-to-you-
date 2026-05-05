@@ -1,81 +1,135 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Special Surprise 🎉</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #ff9a9e, #fad0c4);
-      color: #333;
-      text-align: center;
-    }
-    .container {
-      padding: 30px;
-    }
-    h1 {
-      font-size: 2.5rem;
-      color: #fff;
-    }
-    p {
-      font-size: 1.2rem;
-    }
-    .card {
-      background: white;
-      border-radius: 20px;
-      padding: 20px;
-      margin: 20px auto;
-      max-width: 400px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-    }
-    button {
-      padding: 12px 20px;
-      border: none;
-      border-radius: 10px;
-      background: #ff6f61;
-      color: white;
-      font-size: 1rem;
-      cursor: pointer;
-    }
-    iframe {
-      border-radius: 12px;
-      margin-top: 15px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE PARASITE</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            overflow: hidden;
+            cursor: crosshair; /* Visible until it wakes up */
+        }
+
+        #host-canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #440000;
+            font-family: 'Courier New', monospace;
+            background: black;
+            z-index: 10;
+            cursor: pointer;
+            letter-spacing: 5px;
+        }
+
+        #ui {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            color: #222;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            z-index: 5;
+            pointer-events: none;
+        }
+    </style>
 </head>
-<body>  <div class="container">
-    <h1>🎂 A Special Surprise 🎂</h1><div class="card">
-  <p>Today is not just a day… it's a celebration of YOU 💖</p>
-</div>
+<body>
 
-<div class="card">
-  <h2>💌 Message</h2>
-  <p>You are amazing, strong, and truly special. Never forget how much you mean! ✨</p>
-</div>
+    <div id="overlay">CLICK TO FEED</div>
+    <div id="ui">AWAITING CONNECTION...</div>
+    <canvas id="host-canvas"></canvas>
 
-<div class="card">
-  <h2>🎶 Your Surprise Video</h2>
-  <iframe width="100%" height="200" 
-    src="https://www.youtube.com/embed/5u4xTa3LR2U" 
-    title="YouTube video player" 
-    frameborder="0" 
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-    allowfullscreen>
-  </iframe>
-</div>
+    <script>
+        const canvas = document.getElementById('host-canvas');
+        const ctx = canvas.getContext('2d');
+        const overlay = document.getElementById('overlay');
+        const ui = document.getElementById('ui');
+        
+        let audioCtx;
+        let isAwake = false;
 
-<div class="card">
-  <h2>🎁 Final Surprise</h2>
-  <button onclick="showSurprise()">Click Me 🎉</button>
-  <p id="surpriseText" style="display:none; margin-top:15px; font-weight:bold;">
-    You deserve all the happiness in the world 💕
-  </p>
-</div>
+        // Biological colors
+        const colors = ['#320000', '#1a1a1a', '#4b3b2a', '#222f1e'];
 
-  </div>  <script>
-    function showSurprise() {
-      document.getElementById('surpriseText').style.display = 'block';
-    }
-  </script></body>
+        function initAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        function createSquelch() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(30 + Math.random() * 60, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.2);
+
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.2);
+        }
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            ctx.fillStyle = "black";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        // The Trigger
+        overlay.addEventListener('click', () => {
+            overlay.style.display = 'none';
+            document.body.style.cursor = 'none';
+            initAudio();
+            isAwake = true;
+            ui.innerText = "FEEDING...";
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isAwake) return;
+
+            createSquelch();
+
+            // Draw the splotch
+            ctx.beginPath();
+            const r = 10 + Math.random() * 40;
+            ctx.arc(e.clientX, e.clientY, r, 0, Math.PI * 2);
+            ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+            ctx.globalAlpha = 0.3;
+            ctx.fill();
+
+            // Random "nervous" lines
+            ctx.beginPath();
+            ctx.moveTo(e.clientX, e.clientY);
+            ctx.lineTo(e.clientX + (Math.random()-0.5)*100, e.clientY + (Math.random()-0.5)*100);
+            ctx.strokeStyle = '#111';
+            ctx.stroke();
+        });
+    </script>
+</body>
 </html>
